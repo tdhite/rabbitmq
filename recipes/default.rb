@@ -98,21 +98,29 @@ else
   existing_erlang_key = ""
 end
 
-if node['rabbitmq']['cluster'] and node['rabbitmq']['erlang_cookie'] != existing_erlang_key
+# BEWARE!!! Changing the cookie forces a reset
+if node[:rabbitmq][:cluster] and node[:rabbitmq][:erlang_cookie] != existing_erlang_key
+	# first, stop the app and reset rabbitmq and kill the service
+	script 'reset rabbitmq-server' do
+		action :run
+		interpreter 'bash'
+		user 'root'
+		code <<-EOH
+			rabbitmqctl stop_app
+			rabbitmqctl reset
+		EOH
+  		notifies :stop, "service[rabbitmq-server]", :immediately
+	end
 
-  service "stop rabbitmq-server" do
-    service_name "rabbitmq-server"
-    action :stop
-  end
-
-  template "/var/lib/rabbitmq/.erlang.cookie" do
-    source "doterlang.cookie.erb"
-    owner "rabbitmq"
-    group "rabbitmq"
-    mode 0400
-    notifies :start, "service[rabbitmq-server]", :immediately
-  end
-
+	# create the file resource and notify start
+	file '/var/lib/rabbitmq/.erlang.cookie' do
+		action :create
+		content node[:rabbitmq][:erlang_cookie]
+		owner 'rabbitmq'
+		group 'rabbitmq'
+		mode 0400
+  		notifies :start, "service[rabbitmq-server]", :immediately
+	end
 end
 
 ## You'll see setsid used in all the init statements in this cookbook. This

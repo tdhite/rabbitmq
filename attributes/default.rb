@@ -28,6 +28,7 @@ default['rabbitmq']['default_pass'] = 'guest'
 #clustering
 default['rabbitmq']['cluster'] = false
 default['rabbitmq']['cluster_disk_nodes'] = []
+default['rabbitmq']['current_cluster_disk_nodes'] = []
 default['rabbitmq']['erlang_cookie'] = 'AnyAlphaNumericStringWillDo'
 
 #ssl
